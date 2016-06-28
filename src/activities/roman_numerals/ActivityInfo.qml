@@ -1,6 +1,6 @@
 /* GCompris - ActivityInfo.qml
  *
- * Copyright (C) 2015 Your Name <yy@zz.org>
+ * Copyright (C) 2016 Bruno Coudoin < bruno.coudoin@gcompris.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,16 +18,18 @@
 import GCompris 1.0
 
 ActivityInfo {
-  name: "photohunter/Photohunter.qml"
-  difficulty: 2
-  icon: "photohunter/photohunter.svg"
-  author: "Marc Le Douarain &lt;http://membres.lycos.fr/mavati&gt;"
+  name: "roman_numerals/RomanNumerals.qml"
+  difficulty: 4
+  icon: "roman_numerals/roman_numerals.svg"
+  author: "Bruno Coudoin &lt;bruno.coudoin@gcompris.net&gt;"
   demo: true
-  title: qsTr("Photo hunter")
-  description: qsTr("Find the differences between two pictures")
-  goal: qsTr("Visual discrimination.")
+  title: qsTr("Roman numerals")
+  description: ""
+  //intro: "Learn and practice roman to arabic numerals conversion"
+  goal: ""
   prerequisite: ""
-  manual: qsTr("Observe the two pictures carefully. There are some slight differences. When you find a difference you must click on it.")
+  manual: qsTr("A Roman numeral is the name for a number when it is written in the way the Romans used to write numbers. Roman numerals are not used very often today in the west. They are used to write the names of kings and queens, or popes. For example: Queen Elizabeth II. They may be used to write the year a book or movie was made.")
   credit: ""
-  section: "/puzzle"
+  section: "math"
+  createdInVersion: 7000
 }

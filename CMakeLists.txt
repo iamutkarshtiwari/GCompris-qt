@@ -25,7 +25,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${my_cxx_flags}")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DQT_QML_DEBUG")
 
 set(GCOMPRIS_MAJOR_VERSION 0)
-set(GCOMPRIS_MINOR_VERSION 60)
+set(GCOMPRIS_MINOR_VERSION 70)
 set(GCOMPRIS_PATCH_VERSION 0)
 
 # Set the BUILD_DATE
@@ -65,6 +65,8 @@ if(ANDROID)
   endif("${ANDROID_ARCHITECTURE}" STREQUAL "x86")
 elseif(SAILFISHOS)
   set(GCOMPRIS_EXECUTABLE_NAME harbour-gcompris-qt)
+elseif(WIN32)
+  set(GCOMPRIS_EXECUTABLE_NAME GCompris)
 else()
   set(GCOMPRIS_EXECUTABLE_NAME gcompris-qt)
 endif()
@@ -105,16 +107,22 @@ find_package (KF5 QUIET COMPONENTS
 )
 if(KF5_FOUND)
     include(KDEInstallDirs)
-endif(KF5_FOUND)
 
-FIND_PROGRAM(LCONVERT_EXECUTABLE lconvert lconvert-qt5
+    if (ECM_VERSION VERSION_GREATER "1.6.0")
+        add_subdirectory(images)
+        install(FILES org.kde.gcompris.appdata.xml DESTINATION ${KDE_INSTALL_METAINFODIR})
+        install(FILES org.kde.gcompris.desktop DESTINATION ${KDE_INSTALL_APPDIR})
+    endif()
+endif()
+
+FIND_PROGRAM(LCONVERT_EXECUTABLE lconvert-qt5 lconvert
   PATHS
   ${Qt5_DIR}/../../../bin/
   /usr/local/bin
   /usr/bin/
   NO_DEFAULT_PATH
 )
-FIND_PROGRAM(LRELEASE_EXECUTABLE lrelease lrelease-qt5
+FIND_PROGRAM(LRELEASE_EXECUTABLE lrelease-qt5 lrelease
   PATHS
   ${Qt5_DIR}/../../../bin/
   /usr/local/bin
@@ -228,6 +236,33 @@ add_custom_target(BuildTranslations
   COMMENT "If you don't have the .po, you need to run make getSvnTranslations first then re-run cmake"
   )
 
+add_custom_command(
+    OUTPUT doBundleTranslations
+    COMMAND 7z a -w${CMAKE_BINARY_DIR}/share/${GCOMPRIS_EXECUTABLE_NAME}
+               ${CMAKE_BINARY_DIR}/translations-${GCOMPRIS_VERSION}.7z
+               ${CMAKE_BINARY_DIR}/share/${GCOMPRIS_EXECUTABLE_NAME}/translations
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+# Bundle translations
+add_custom_target(BundleTranslations
+  DEPENDS doBundleTranslations
+  COMMENT "If you want to provide a zip of the translations on a server (run make BuildTranslations first)"
+  )
+
+add_custom_command(
+    OUTPUT doDlAndInstallBundledTranslations
+    COMMAND curl -fsS -o translations-${GCOMPRIS_VERSION}.7z
+                 http://gcompris.net/download/translations-${GCOMPRIS_VERSION}.7z
+    COMMAND 7z x -y -o${CMAKE_BINARY_DIR}/share/${GCOMPRIS_EXECUTABLE_NAME}
+               translations-${GCOMPRIS_VERSION}.7z
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+# Download and install bundled translations
+add_custom_target(DlAndInstallBundledTranslations
+  DEPENDS doDlAndInstallBundledTranslations
+  COMMENT "Download the bundled translation and install them in the build dir"
+  )
+
 if(CMAKE_HOST_APPLE)
   install(DIRECTORY ${GCOMPRIS_TRANSLATIONS_DIR} DESTINATION ${_bundle_bin})
 else()
@@ -307,6 +342,30 @@ add_custom_target(getAssets
   DEPENDS assetsFolders predownloadAssets
   )
 
+add_custom_command(
+    OUTPUT doBundleConvertedOggs
+    COMMAND 7z a converted_ogg_to_${COMPRESSED_AUDIO}-${GCOMPRIS_VERSION}.7z '-ir!src/*${COMPRESSED_AUDIO}'
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+# Bundle oggs ready to be uploaded on a server. This ease build on system without the appropriate audio
+# convertion tools.
+add_custom_target(BundleConvertedOggs
+  DEPENDS doBundleConvertedOggs
+  COMMENT "Bundle the converted oggs to upload them on a server. First set COMPRESSED_AUDIO appropriately."
+  )
+
+add_custom_command(
+    OUTPUT doDlAndInstallBundledConvertedOggs
+    COMMAND curl -fsS -o converted_ogg_to_${COMPRESSED_AUDIO}-${GCOMPRIS_VERSION}.7z
+            http://gcompris.net/download/converted_ogg_to_${COMPRESSED_AUDIO}-${GCOMPRIS_VERSION}.7z
+    COMMAND 7z x -y converted_ogg_to_${COMPRESSED_AUDIO}-${GCOMPRIS_VERSION}.7z
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+# Download and install bundled converted oggs
+add_custom_target(DlAndInstallBundledConvertedOggs
+  DEPENDS doDlAndInstallBundledConvertedOggs
+  COMMENT "Download the bundled converted oggs and install them in the source dir"
+  )
 
 
 set(ARCHIVE_NAME ${CMAKE_PROJECT_NAME}-${GCOMPRIS_VERSION})
